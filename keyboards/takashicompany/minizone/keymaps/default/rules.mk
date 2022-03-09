@@ -1,4 +1,4 @@
-POINTING_DEVICE_ENABLE = yes
-SRC += paw3204.c
+# POINTING_DEVICE_ENABLE = yes
+# SRC += paw3204.c
 # CONSOLE_ENABLE = yes
-VIA_ENABLE = yes
+# VIA_ENABLE = yes
