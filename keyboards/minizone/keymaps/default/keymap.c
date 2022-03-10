@@ -52,9 +52,9 @@ int16_t after_click_lock_movement = 0;
 
 uint16_t click_layer = 9;
 
+uint32_t keymaps_len() { return 38; }
 
-
-const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] = {{{KC_A, KC_B, KC_C, KC_D, KC_E, KC_F, KC_G, KC_H, KC_I, KC_J, KC_K, KC_L, KC_M, KC_N, KC_O, KC_P, KC_Q, KC_R, KC_S}}};
+const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] = {KC_NO};
 
 // const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
@@ -187,57 +187,57 @@ void off_mouse(void) {
 bool is_mouse_mode(void) {
     return state == CLICKABLE || state == CLICKING || state == SCROLLING;
 }
-bool process_record_user(uint16_t keycode, keyrecord_t* record) {
-// bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+// bool process_record_user(uint16_t keycode, keyrecord_t* record) {
+// // bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
-    //dprintf("col:%4d  row:%4d keycode: %d \n", record->event.key.col, record->event.key.row, keycode);
-    //dprintf("keycode: %d", keycode);
-    switch (keycode) {
-        case KC_MY_BTN1:
-        case KC_MY_BTN2:
-        case KC_MY_BTN3:
-        {
-            dprintf("KC_MY_BTN!");
-            report_mouse_t currentReport = pointing_device_get_report();
+//     //dprintf("col:%4d  row:%4d keycode: %d \n", record->event.key.col, record->event.key.row, keycode);
+//     //dprintf("keycode: %d", keycode);
+//     switch (keycode) {
+//         case KC_MY_BTN1:
+//         case KC_MY_BTN2:
+//         case KC_MY_BTN3:
+//         {
+//             dprintf("KC_MY_BTN!");
+//             report_mouse_t currentReport = pointing_device_get_report();
 
-            // どこのビットを対象にするか
-            uint8_t btn = 1 << (keycode - KC_MY_BTN1);
+//             // どこのビットを対象にするか
+//             uint8_t btn = 1 << (keycode - KC_MY_BTN1);
             
-            if (record->event.pressed) {
-                // ビットORは演算子の左辺と右辺の同じ位置にあるビットを比較して、両方のビットのどちらかが「1」の場合に「1」にします。
-                currentReport.buttons |= btn;
-                mouse_rep.buttons |= btn;
-                state = CLICKING;
-                after_click_lock_movement = 30;
-            } else {
-                // ビットANDは演算子の左辺と右辺の同じ位置にあるビットを比較して、両方のビットが共に「1」の場合だけ「1」にします。
-                currentReport.buttons &= ~btn;
-                mouse_rep.buttons &= ~btn;
-                on_mouse();
-            }
+//             if (record->event.pressed) {
+//                 // ビットORは演算子の左辺と右辺の同じ位置にあるビットを比較して、両方のビットのどちらかが「1」の場合に「1」にします。
+//                 currentReport.buttons |= btn;
+//                 mouse_rep.buttons |= btn;
+//                 state = CLICKING;
+//                 after_click_lock_movement = 30;
+//             } else {
+//                 // ビットANDは演算子の左辺と右辺の同じ位置にあるビットを比較して、両方のビットが共に「1」の場合だけ「1」にします。
+//                 currentReport.buttons &= ~btn;
+//                 mouse_rep.buttons &= ~btn;
+//                 on_mouse();
+//             }
 
-            pointing_device_set_report(currentReport);
-            return false;
-        }
+//             pointing_device_set_report(currentReport);
+//             return false;
+//         }
 
-        case KC_MY_SCR:
-            if (record->event.pressed) {
-                state = SCROLLING;
-            } else {
-                off_mouse();
-            }
-         return false;
+//         case KC_MY_SCR:
+//             if (record->event.pressed) {
+//                 state = SCROLLING;
+//             } else {
+//                 off_mouse();
+//             }
+//          return false;
 
-         default:
-            if  (record->event.pressed) {
-                state = NONE;
-                layer_off(click_layer);
-            }
+//          default:
+//             if  (record->event.pressed) {
+//                 state = NONE;
+//                 layer_off(click_layer);
+//             }
         
-    }
+//     }
    
-    return true;
-}
+//     return true;
+// }
 
 // void keyboard_post_init_user(void) {
 //   // Customise these values to desired behaviour
