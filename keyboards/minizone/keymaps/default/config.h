@@ -16,4 +16,4 @@
 
 #pragma once
 
-// place overrides here
+// #define MATRIX_SCAN_TIME_MS 30
