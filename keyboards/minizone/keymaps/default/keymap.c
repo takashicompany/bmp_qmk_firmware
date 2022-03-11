@@ -37,7 +37,7 @@ enum custom_keycodes {
     KC_MY_SCR,
 };
 
-const key_string_map_t custom_keys_user = {.start_kc = KC_MY_BTN1, .end_kc = KC_MY_SCR, .key_strings = "MY_BTN1\0KC_MY_BTN2\0KC_MY_BTN3\0KC_MY_SCR\0"};
+const key_string_map_t custom_keys_user = {.start_kc = KC_MY_BTN1, .end_kc = KC_MY_SCR, .key_strings = "MY_BTN1\0MY_BTN2\0MY_BTN3\0MY_SCR\0"};
 
 enum click_state state;
 uint16_t click_timer;
