@@ -66,8 +66,8 @@ int spi_soft_half_duplex(uint8_t *p_tx_buffer, size_t tx_length, uint8_t *p_rx_b
     return BMPAPI->spim.start(p_tx_buffer + 1, 1, p_rx_buffer + 1, 1, cs_pin);
 }
 
-// spi_paw3204_t spi_paw3204 = spim_start;
-spi_paw3204_t spi_paw3204 = spi_soft_half_duplex;
+ spi_paw3204_t spi_paw3204 = spim_start;
+//spi_paw3204_t spi_paw3204 = spi_soft_half_duplex;
 
 uint8_t read_pid_paw3204() {
     spim_init();

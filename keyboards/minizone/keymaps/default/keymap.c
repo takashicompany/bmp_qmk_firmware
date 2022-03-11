@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-/*
+
 #include QMK_KEYBOARD_H
 #include "bmp.h"
 #include "bmp_custom_keycode.h"
@@ -157,7 +157,11 @@ bool is_mouse_mode(void) {
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-
+    bool continue_process = process_record_user_bmp(keycode, record);
+    if (continue_process == false)
+    {
+        return false;
+    }
     //dprintf("col:%4d  row:%4d keycode: %d \n", record->event.key.col, record->event.key.row, keycode);
     //dprintf("keycode: %d", keycode);
     switch (keycode) {
@@ -207,13 +211,14 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return true;
 }
 
-    void keyboard_post_init_user(void) {
-    // Customise these values to desired behaviour
-    debug_enable=true;
-    debug_matrix=true;
-    //debug_keyboard=true;
-    //debug_mouse=true;
-    }
+    // void keyboard_post_init_user(void) {
+    // // Customise these values to desired behaviour
+    // debug_enable=true;
+    // debug_matrix=true;
+    // //debug_keyboard=true;
+    // //debug_mouse=true;
+    // }
+
 
 void matrix_init_user() { init_paw3204(); }
 
@@ -221,6 +226,7 @@ void matrix_scan_user() {
     static int  cnt;
     static bool paw_ready;
     if (cnt++ % 50 == 0) {
+        
         uint8_t pid = read_pid_paw3204();
         if (pid == 0x30) {
             //dprint("paw3204 OK\n");
@@ -229,6 +235,7 @@ void matrix_scan_user() {
             //dprintf("paw3204 NG:%d\n", pid);
             paw_ready = false;
         }
+        
     }
 
     if (paw_ready) {
@@ -339,8 +346,9 @@ void matrix_scan_user() {
         }
     }
 }
-*/
 
+
+/*
 #include QMK_KEYBOARD_H
 #include "bmp.h"
 #include "bmp_custom_keycode.h"
@@ -432,3 +440,75 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
 
     return true;
 }
+*/
+
+/*
+#include QMK_KEYBOARD_H
+#include "bmp.h"
+#include "bmp_custom_keycode.h"
+#include "keycode_str_converter.h"
+
+// Defines the keycodes used by our macros in process_record_user
+enum custom_keycodes {
+    LOWER = BMP_SAFE_RANGE,
+    RAISE,
+};
+
+const key_string_map_t custom_keys_user =
+{
+    .start_kc = LOWER,
+    .end_kc = RAISE,
+    .key_strings = "LOWER\0RAISE\0"
+};
+
+enum layers {
+    _BASE, _LOWER, _RAISE, _ADJUST
+};
+
+const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
+    {{
+    KC_A, KC_B, KC_C, KC_D, KC_E, KC_F, KC_G, KC_H, KC_I,
+        KC_J, KC_K, KC_L, KC_M, KC_N, KC_O, KC_P, KC_Q, KC_R, KC_S
+    }}
+};
+
+uint32_t keymaps_len() {
+  return 19;
+}
+
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+  bool continue_process = process_record_user_bmp(keycode, record);
+  if (continue_process == false)
+  {
+    return false;
+  }
+
+  switch (keycode) {
+    case LOWER:
+      if (record->event.pressed) {
+        layer_on(_LOWER);
+        update_tri_layer(_LOWER, _RAISE, _ADJUST);
+      } else {
+        layer_off(_LOWER);
+        update_tri_layer(_LOWER, _RAISE, _ADJUST);
+      }
+      return false;
+      break;
+    case RAISE:
+      if (record->event.pressed) {
+        layer_on(_RAISE);
+        update_tri_layer(_LOWER, _RAISE, _ADJUST);
+      } else {
+        layer_off(_RAISE);
+        update_tri_layer(_LOWER, _RAISE, _ADJUST);
+      }
+      return false;
+      break;
+    default:
+      break;
+  }
+
+  return true;
+}
+
+*/
