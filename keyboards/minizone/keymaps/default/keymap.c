@@ -242,7 +242,7 @@ void matrix_scan_user() {
         int8_t x, y;
 
         read_paw3204(&stat, &x, &y);
-        //mouse_rep.buttons = 0;    // ボタンの状態はここでは上書きしない
+        //mouse_rep.buttons = 0;    // ボタンの状態はここでは上書きしない       
         mouse_rep.h       = 0;
         mouse_rep.v       = 0;
         mouse_rep.x       = y;
@@ -251,13 +251,17 @@ void matrix_scan_user() {
         
 
         if (stat & 0x80) {
-            //dprintf("x:%4d y:%4d \n", mouse_rep.x,  mouse_rep.y);
+            dprintf("x:%4d y:%4d \n", mouse_rep.x,  mouse_rep.y);
 
             // if (state != SCROLLING) {
             //     pointing_device_set_report(mouse_rep);
             // }
 
             switch (state) {
+                case CLICKABLE:
+                    click_timer = timer_read();
+                    break;
+
                 case CLICKING:
                     after_click_lock_movement -= abs(mouse_rep.x) + abs(mouse_rep.y);
 
@@ -334,6 +338,7 @@ void matrix_scan_user() {
                     break;
 
                 case CLICKABLE:
+                    dprintf("clickable!\n");
                     if (timer_elapsed(click_timer) > 1000) {
                         off_mouse();
                     }
