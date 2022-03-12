@@ -162,8 +162,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     {
         return false;
     }
-    //dprintf("col:%4d  row:%4d keycode: %d \n", record->event.key.col, record->event.key.row, keycode);
-    //dprintf("keycode: %d", keycode);
+    
     switch (keycode) {
         case KC_MY_BTN1:
         case KC_MY_BTN2:
@@ -251,11 +250,7 @@ void matrix_scan_user() {
         
 
         if (stat & 0x80) {
-            dprintf("x:%4d y:%4d \n", mouse_rep.x,  mouse_rep.y);
-
-            // if (state != SCROLLING) {
-            //     pointing_device_set_report(mouse_rep);
-            // }
+            // dprintf("x:%4d y:%4d \n", mouse_rep.x,  mouse_rep.y);
 
             switch (state) {
                 case CLICKABLE:
@@ -338,7 +333,6 @@ void matrix_scan_user() {
                     break;
 
                 case CLICKABLE:
-                    dprintf("clickable!\n");
                     if (timer_elapsed(click_timer) > 1000) {
                         off_mouse();
                     }
