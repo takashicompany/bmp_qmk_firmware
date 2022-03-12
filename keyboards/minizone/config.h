@@ -45,8 +45,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define IS_LEFT_HAND  true
 #define BMP_DEFAULT_MODE SINGLE
 
-#define DEBUG_MATRIX_SCAN_RATE
-
 /*
  * Enable mass storage when the switch connected following pins is pushed on boot.
  * No warranty
