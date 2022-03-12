@@ -131,7 +131,7 @@ void on_mouse(void) {
     click_timer = timer_read();
     state = CLICKABLE;
 
-    dprintf("mouse on\n");
+    //dprintf("mouse on\n");
 }
 
 void off_mouse(void) {
@@ -140,7 +140,7 @@ void off_mouse(void) {
     scroll_v_counter = 0;
     scroll_h_counter = 0;
 
-    dprintf("mouse off\n");
+    //dprintf("mouse off\n");
 }
 
 // #include <stdlib.h>しないために自前で絶対値を出す
@@ -169,7 +169,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         case KC_MY_BTN2:
         case KC_MY_BTN3:
         {
-            dprintf("KC_MY_BTN!");
             report_mouse_t currentReport = pointing_device_get_report();
 
             // どこのビットを対象にするか
@@ -252,7 +251,7 @@ void matrix_scan_user() {
         
 
         if (stat & 0x80) {
-            dprintf("x:%4d y:%4d \n", mouse_rep.x,  mouse_rep.y);
+            //dprintf("x:%4d y:%4d \n", mouse_rep.x,  mouse_rep.y);
 
             // if (state != SCROLLING) {
             //     pointing_device_set_report(mouse_rep);
