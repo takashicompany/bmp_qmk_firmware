@@ -16,4 +16,4 @@
 
 #pragma once
 
-// #define MATRIX_SCAN_TIME_MS 30
+// #define MATRIX_SCAN_TIME_MS 10
