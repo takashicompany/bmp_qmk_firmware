@@ -45,7 +45,7 @@ enum click_state state;     // 現在のクリック入力受付の状態
 uint16_t click_timer;       // タイマー。状態に応じて時間で判定する
 
 uint16_t to_clickable_time = 100;   // この秒数(千分の一秒)、WAITING状態ならクリックレイヤーが有効になる
-uint16_t to_reset_time = 1000: // この秒数(千分の一秒)、CLICKABLE状態ならクリックレイヤーが無効になる
+uint16_t to_reset_time = 1000; // この秒数(千分の一秒)、CLICKABLE状態ならクリックレイヤーが無効になる
 
 uint16_t click_layer = 9;   // マウス入力が可能になった際に有効になるレイヤー
 
@@ -131,14 +131,14 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 };
 
 // クリック用のレイヤーを有効にする
-void on_mouse(void) {
+void enable_click_layer(void) {
     layer_on(click_layer);
     click_timer = timer_read();
     state = CLICKABLE;
 }
 
 // クリック用のレイヤーを無効にする
-void off_mouse(void) {
+void disable_click_layer(void) {
     state = NONE;
     layer_off(click_layer);
     scroll_v_counter = 0;
@@ -186,7 +186,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 // ビットANDは演算子の左辺と右辺の同じ位置にあるビットを比較して、両方のビットが共に「1」の場合だけ「1」にします。
                 currentReport.buttons &= ~btn;
                 mouse_rep.buttons &= ~btn;
-                on_mouse();
+                enable_click_layer();
             }
 
             pointing_device_set_report(currentReport);
@@ -197,14 +197,14 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             if (record->event.pressed) {
                 state = SCROLLING;
             } else {
-                off_mouse();
+                disable_click_layer();
             }
          return false;
 
          default:
             if  (record->event.pressed) {
                 state = NONE;
-                layer_off(click_layer);
+                disable_click_layer();
             }
         
     }
@@ -306,7 +306,7 @@ void matrix_scan_user() {
 
                 case WAITING:
                     if (timer_elapsed(click_timer) > to_clickable_time) {
-                        on_mouse();
+                        enable_click_layer();
                     }
                     break;
 
@@ -327,7 +327,7 @@ void matrix_scan_user() {
 
                 case CLICKABLE:
                     if (timer_elapsed(click_timer) > to_reset_time) {
-                        off_mouse();
+                        disable_click_layer();
                     }
                     break;
 
