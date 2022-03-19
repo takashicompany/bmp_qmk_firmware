@@ -20,14 +20,15 @@
 #include "keycode_str_converter.h"
 #include "pointing_device.h"
 #include "paw3204.h"
+
 report_mouse_t mouse_rep;
 
 enum click_state {
     NONE = 0,
-    WAIT_CLICK,
-    CLICKABLE,
-    CLICKING,
-    SCROLLING
+    WAITING,    // マウスレイヤーが有効になるのを待つ
+    CLICKABLE,  // マウスレイヤー有効になりクリック入力が取れる
+    CLICKING,   // クリックをしている
+    SCROLLING   // スクロール中
 };
 
 enum custom_keycodes {
@@ -38,21 +39,24 @@ enum custom_keycodes {
 };
 
 const key_string_map_t custom_keys_user = {.start_kc = KC_MY_BTN1, .end_kc = KC_MY_SCR, .key_strings = "MY_BTN1\0MY_BTN2\0MY_BTN3\0MY_SCR\0"};
-
-enum click_state state;
-uint16_t click_timer;
-
-int16_t scroll_v_counter;
-int16_t scroll_h_counter;
-
-int16_t scroll_v_threshold = 30;
-int16_t scroll_h_threshold = 30;
-
-int16_t after_click_lock_movement = 0;
-
-uint16_t click_layer = 9;
-
 uint32_t keymaps_len() { return 38; }
+
+enum click_state state;     // 現在のクリック入力受付の状態
+uint16_t click_timer;       // タイマー。状態に応じて時間で判定する
+
+uint16_t to_clickable_time = 100;   // この秒数(千分の一秒)、WAITING状態ならクリックレイヤーが有効になる
+uint16_t to_reset_time = 1000: // この秒数(千分の一秒)、CLICKABLE状態ならクリックレイヤーが無効になる
+
+uint16_t click_layer = 9;   // マウス入力が可能になった際に有効になるレイヤー
+
+int16_t scroll_v_counter;   // 垂直スクロールの入力をカウントする
+int16_t scroll_h_counter;   // 水平スクロールの入力をカウントする
+
+int16_t scroll_v_threshold = 30;    // この閾値を超える度に垂直スクロールが実行される
+int16_t scroll_h_threshold = 30;    // この閾値を超える度に水平スクロールが実行される
+
+int16_t after_click_lock_movement = 0;      // クリック入力後の移動量を測定する変数
+
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
@@ -126,33 +130,32 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     )
 };
 
+// クリック用のレイヤーを有効にする
 void on_mouse(void) {
     layer_on(click_layer);
     click_timer = timer_read();
     state = CLICKABLE;
-
-    //dprintf("mouse on\n");
 }
 
+// クリック用のレイヤーを無効にする
 void off_mouse(void) {
     state = NONE;
     layer_off(click_layer);
     scroll_v_counter = 0;
     scroll_h_counter = 0;
-
-    //dprintf("mouse off\n");
 }
 
-// #include <stdlib.h>しないために自前で絶対値を出す
-// int16_t abs(int16_t num) {
-//     if (num < 0) {
-//         num = -num;
-//     }
+// 自前の絶対数を返す関数
+int16_t my_abs(int16_t num) {
+    if (num < 0) {
+        num = -num;
+    }
 
-//     return num;
-// }
+    return num;
+}
 
-bool is_mouse_mode(void) {
+// 現在クリックが可能な状態か
+bool is_clickable_mode(void) {
     return state == CLICKABLE || state == CLICKING || state == SCROLLING;
 }
 
@@ -209,15 +212,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return true;
 }
 
-    // void keyboard_post_init_user(void) {
-    // // Customise these values to desired behaviour
-    // debug_enable=true;
-    // debug_matrix=true;
-    // //debug_keyboard=true;
-    // //debug_mouse=true;
-    // }
-
-
 void matrix_init_user() { init_paw3204(); }
 
 void matrix_scan_user() {
@@ -247,8 +241,6 @@ void matrix_scan_user() {
         mouse_rep.x       = y;
         mouse_rep.y       = -x;
 
-        
-
         if (stat & 0x80) {
             // dprintf("x:%4d y:%4d \n", mouse_rep.x,  mouse_rep.y);
 
@@ -258,7 +250,7 @@ void matrix_scan_user() {
                     break;
 
                 case CLICKING:
-                    after_click_lock_movement -= abs(mouse_rep.x) + abs(mouse_rep.y);
+                    after_click_lock_movement -= my_abs(mouse_rep.x) + my_abs(mouse_rep.y);
 
                     if (after_click_lock_movement > 0) {
                         mouse_rep.x = 0;
@@ -269,13 +261,12 @@ void matrix_scan_user() {
 
                 case SCROLLING:
                 {
-                    // TODO 既定値を超えた場合のハンドリング
                     int8_t rep_v = 0;
                     int8_t rep_h = 0;
-                    if (abs(mouse_rep.y) * 2 > abs(mouse_rep.x)) {
+                    if (my_abs(mouse_rep.y) * 2 > my_abs(mouse_rep.x)) {
 
                         scroll_v_counter += mouse_rep.y;
-                        while (abs(scroll_v_counter) > scroll_v_threshold) {
+                        while (my_abs(scroll_v_counter) > scroll_v_threshold) {
                             if (scroll_v_counter < 0) {
                                 //tap_code16(KC_WH_U);
                                 scroll_v_counter += scroll_v_threshold;
@@ -291,7 +282,7 @@ void matrix_scan_user() {
 
                         scroll_h_counter += mouse_rep.x;
 
-                        while (abs(scroll_h_counter) > scroll_h_threshold) {
+                        while (my_abs(scroll_h_counter) > scroll_h_threshold) {
                             if (scroll_h_counter < 0) {
                                 // tap_code16(KC_WH_L);
                                 scroll_h_counter += scroll_h_threshold;
@@ -311,15 +302,15 @@ void matrix_scan_user() {
                 }
                     break;
 
-                case WAIT_CLICK:
-                    if (timer_elapsed(click_timer) > 50) {
+                case WAITING:
+                    if (timer_elapsed(click_timer) > to_clickable_time) {
                         on_mouse();
                     }
                     break;
 
                 default:
                     click_timer = timer_read();
-                    state = WAIT_CLICK;
+                    state = WAITING;
             }
 
             pointing_device_set_report(mouse_rep);
@@ -333,7 +324,7 @@ void matrix_scan_user() {
                     break;
 
                 case CLICKABLE:
-                    if (timer_elapsed(click_timer) > 1000) {
+                    if (timer_elapsed(click_timer) > to_reset_time) {
                         off_mouse();
                     }
                     break;
@@ -344,169 +335,3 @@ void matrix_scan_user() {
         }
     }
 }
-
-
-/*
-#include QMK_KEYBOARD_H
-#include "bmp.h"
-#include "bmp_custom_keycode.h"
-#include "keycode_str_converter.h"
-#include "pointing_device.h"
-#include "paw3204.h"
-
-report_mouse_t mouse_rep;
-
-// Defines the keycodes used by our macros in process_record_user
-enum custom_keycodes {
-    LOWER = BMP_SAFE_RANGE,
-    TEST,
-    RAISE,
-};
-
-const key_string_map_t custom_keys_user = {.start_kc = LOWER, .end_kc = RAISE, .key_strings = "LOWER\0TEST\0RAISE\0"};
-
-enum layers { _BASE, _LOWER, _RAISE, _ADJUST };
-
-const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] = {{{KC_A, KC_B, KC_C, KC_D, KC_E, KC_F, KC_G, KC_H, KC_I, KC_J, KC_K, KC_L, KC_M, KC_N, KC_O, KC_P, KC_Q, KC_R, KC_S}}};
-
-uint32_t keymaps_len() { return sizeof(keymaps) / sizeof(uint16_t); }
-
-void matrix_init_user() { init_paw3204(); }
-
-void matrix_scan_user() {
-    static int  cnt;
-    static bool paw_ready;
-    if (cnt++ % 50 == 0) {
-        uint8_t pid = read_pid_paw3204();
-        if (pid == 0x30) {
-            dprint("paw3204 OK\n");
-            paw_ready = true;
-        } else {
-            dprintf("paw3204 NG:%d\n", pid);
-            paw_ready = false;
-        }
-    }
-
-    if (paw_ready) {
-        uint8_t stat;
-        int8_t x, y;
-
-        read_paw3204(&stat, &x, &y);
-        mouse_rep.buttons = 0;
-        mouse_rep.h       = 0;
-        mouse_rep.v       = 0;
-        mouse_rep.x       = y;
-        mouse_rep.y       = -x;
-
-        dprintf("stat:0x%02x x:%4d y:%4d\n", stat, mouse_rep.x, mouse_rep.y);
-
-        if (stat & 0x80) {
-            pointing_device_set_report(mouse_rep);
-        }
-    }
-}
-
-bool process_record_user(uint16_t keycode, keyrecord_t* record) {
-    // bool continue_process = process_record_user_bmp(keycode, record);
-    // if (continue_process == false) {
-    //     return false;
-    // }
-    SEND_STRING("gey");
-    dprintf("pre");
-    switch (keycode) {
-        case LOWER:
-            if (record->event.pressed) {
-                layer_on(_LOWER);
-                update_tri_layer(_LOWER, _RAISE, _ADJUST);
-            } else {
-                layer_off(_LOWER);
-                update_tri_layer(_LOWER, _RAISE, _ADJUST);
-            }
-            return false;
-            break;
-        case RAISE:
-            SEND_STRING("QMK is awesome2.");
-            return false;
-            break;
-        case TEST:
-            SEND_STRING("QMK is awesome.");
-            return false;
-            break;
-        default:
-            break;
-    }
-
-    return true;
-}
-*/
-
-/*
-#include QMK_KEYBOARD_H
-#include "bmp.h"
-#include "bmp_custom_keycode.h"
-#include "keycode_str_converter.h"
-
-// Defines the keycodes used by our macros in process_record_user
-enum custom_keycodes {
-    LOWER = BMP_SAFE_RANGE,
-    RAISE,
-};
-
-const key_string_map_t custom_keys_user =
-{
-    .start_kc = LOWER,
-    .end_kc = RAISE,
-    .key_strings = "LOWER\0RAISE\0"
-};
-
-enum layers {
-    _BASE, _LOWER, _RAISE, _ADJUST
-};
-
-const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-    {{
-    KC_A, KC_B, KC_C, KC_D, KC_E, KC_F, KC_G, KC_H, KC_I,
-        KC_J, KC_K, KC_L, KC_M, KC_N, KC_O, KC_P, KC_Q, KC_R, KC_S
-    }}
-};
-
-uint32_t keymaps_len() {
-  return 19;
-}
-
-bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-  bool continue_process = process_record_user_bmp(keycode, record);
-  if (continue_process == false)
-  {
-    return false;
-  }
-
-  switch (keycode) {
-    case LOWER:
-      if (record->event.pressed) {
-        layer_on(_LOWER);
-        update_tri_layer(_LOWER, _RAISE, _ADJUST);
-      } else {
-        layer_off(_LOWER);
-        update_tri_layer(_LOWER, _RAISE, _ADJUST);
-      }
-      return false;
-      break;
-    case RAISE:
-      if (record->event.pressed) {
-        layer_on(_RAISE);
-        update_tri_layer(_LOWER, _RAISE, _ADJUST);
-      } else {
-        layer_off(_RAISE);
-        update_tri_layer(_LOWER, _RAISE, _ADJUST);
-      }
-      return false;
-      break;
-    default:
-      break;
-  }
-
-  return true;
-}
-
-*/
