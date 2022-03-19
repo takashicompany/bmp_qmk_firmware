@@ -263,6 +263,8 @@ void matrix_scan_user() {
                 {
                     int8_t rep_v = 0;
                     int8_t rep_h = 0;
+
+                    // 垂直スクロールの方の感度を高める
                     if (my_abs(mouse_rep.y) * 2 > my_abs(mouse_rep.x)) {
 
                         scroll_v_counter += mouse_rep.y;
