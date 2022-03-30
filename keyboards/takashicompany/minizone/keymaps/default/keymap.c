@@ -1,25 +1,27 @@
-/* Copyright 2019 sekigon-gonnoc
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+// Copyright 2022 takashicompany (@takashicompany)
+// SPDX-License-Identifier: GPL-2.0-or-later
 
 #include QMK_KEYBOARD_H
+
+#include "pointing_device.h"
+#include "paw3204.h"
+
+enum custom_keycodes {
+    KC_MY_BTN1 = SAFE_RANGE,
+    KC_MY_BTN2,
+    KC_MY_BTN3,
+    KC_MY_SCR,
+};
+
+// BLE Micro Pro用の記述 ここから
 #include "bmp.h"
 #include "bmp_custom_keycode.h"
 #include "keycode_str_converter.h"
-#include "pointing_device.h"
-#include "paw3204.h"
+
+const key_string_map_t custom_keys_user = {.start_kc = KC_MY_BTN1, .end_kc = KC_MY_SCR, .key_strings = "MY_BTN1\0MY_BTN2\0MY_BTN3\0MY_SCR\0"};
+uint32_t keymaps_len() { return 38; }
+
+// BLE Micro Pro用の記述 ここまで
 
 report_mouse_t mouse_rep;
 
@@ -30,16 +32,6 @@ enum click_state {
     CLICKING,   // クリックをしている
     SCROLLING   // スクロール中
 };
-
-enum custom_keycodes {
-    KC_MY_BTN1 = BMP_SAFE_RANGE,
-    KC_MY_BTN2,
-    KC_MY_BTN3,
-    KC_MY_SCR,
-};
-
-const key_string_map_t custom_keys_user = {.start_kc = KC_MY_BTN1, .end_kc = KC_MY_SCR, .key_strings = "MY_BTN1\0MY_BTN2\0MY_BTN3\0MY_SCR\0"};
-uint32_t keymaps_len() { return 38; }
 
 enum click_state state;     // 現在のクリック入力受付の状態
 uint16_t click_timer;       // タイマー。状態に応じて時間で判定する
