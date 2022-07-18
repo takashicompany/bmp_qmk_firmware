@@ -35,3 +35,5 @@ float   trackball_get_precision(void);
 void    trackball_set_precision(float precision);
 bool    trackball_is_scrolling(void);
 void    trackball_set_scrolling(bool scroll);
+
+typedef int16_t i2c_status_t;
