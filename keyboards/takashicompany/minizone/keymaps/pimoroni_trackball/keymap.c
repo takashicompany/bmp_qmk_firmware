@@ -35,7 +35,7 @@ uint16_t click_timer;       // タイマー。状態に応じて時間で判定�
 uint16_t to_clickable_time = 10;   // この秒数(千分の一秒)、WAITING状態ならクリックレイヤーが有効になる。  For this number of seconds (milliseconds), if in WAITING state, the click layer is activated.
 uint16_t to_reset_time = 1000; // この秒数(千分の一秒)、CLICKABLE状態ならクリックレイヤーが無効になる。 For this number of seconds (milliseconds), the click layer is disabled if in CLICKABLE state.
 
-uint16_t click_layer = 9;   // マウス入力が可能になった際に有効になるレイヤー。Layers enabled when mouse input is enabled
+uint16_t click_layer = 10;   // マウス入力が可能になった際に有効になるレイヤー。Layers enabled when mouse input is enabled
 
 int16_t scroll_v_mouse_interval_counter;   // 垂直スクロールの入力をカウントする。　Counting Vertical Scroll Inputs
 int16_t scroll_h_mouse_interval_counter;   // 水平スクロールの入力をカウントする。  Counts horizontal scrolling inputs.
@@ -225,188 +225,188 @@ bool is_clickable_mode(void) {
 
 report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
 
-    if (!is_record_mouse) {
-        if (mouse_report.x != 0 || mouse_report.y != 0) {
-            is_record_mouse = true;
-            mouse_record_x = 0;
-            mouse_record_y = 0;
-            mouse_record_count = 0;
-        }
-    }
+    // if (!is_record_mouse) {
+    //     if (mouse_report.x != 0 || mouse_report.y != 0) {
+    //         is_record_mouse = true;
+    //         mouse_record_x = 0;
+    //         mouse_record_y = 0;
+    //         mouse_record_count = 0;
+    //     }
+    // }
 
-    if (is_record_mouse) {
-        mouse_record_x += mouse_report.x;
-        mouse_record_y += mouse_report.y;
-        mouse_record_count++;
+    // if (is_record_mouse) {
+    //     mouse_record_x += mouse_report.x;
+    //     mouse_record_y += mouse_report.y;
+    //     mouse_record_count++;
 
-        if (mouse_record_count >= mouse_record_threshold) {
-            mouse_interval_counter = 0;
-            int16_t absX = my_abs(mouse_record_x);
-            int16_t absY = my_abs(mouse_record_y);
-            is_mouse_move_x_min = absX < absY;
+    //     if (mouse_record_count >= mouse_record_threshold) {
+    //         mouse_interval_counter = 0;
+    //         int16_t absX = my_abs(mouse_record_x);
+    //         int16_t absY = my_abs(mouse_record_y);
+    //         is_mouse_move_x_min = absX < absY;
 
-            mouse_move_remain_count = absY + absX;
-            mouse_move_remain_count *= mouse_move_count_ratio;
+    //         mouse_move_remain_count = absY + absX;
+    //         mouse_move_remain_count *= mouse_move_count_ratio;
 
-            mouse_move_x_sign = mmouse_move_y_sign(mouse_record_x);
-            mouse_move_y_sign = mmouse_move_y_sign(mouse_record_y);
+    //         mouse_move_x_sign = mmouse_move_y_sign(mouse_record_x);
+    //         mouse_move_y_sign = mmouse_move_y_sign(mouse_record_y);
 
-            if (is_mouse_move_x_min) {
-                if (mouse_record_x == 0) {
-                    mouse_interval_delta = 0;
-                } else {
-                    mouse_interval_delta = (double)absX / (double)absY;
-                }
-            } else {
-                if (mouse_record_y == 0) {
-                    mouse_interval_delta = 0;
-                } else {
-                    mouse_interval_delta = (double)absY / (double)absX;
-                }
-            }
+    //         if (is_mouse_move_x_min) {
+    //             if (mouse_record_x == 0) {
+    //                 mouse_interval_delta = 0;
+    //             } else {
+    //                 mouse_interval_delta = (double)absX / (double)absY;
+    //             }
+    //         } else {
+    //             if (mouse_record_y == 0) {
+    //                 mouse_interval_delta = 0;
+    //             } else {
+    //                 mouse_interval_delta = (double)absY / (double)absX;
+    //             }
+    //         }
 
-            is_record_mouse = false;
-            mouse_record_count = 0;
-        }
-    }
+    //         is_record_mouse = false;
+    //         mouse_record_count = 0;
+    //     }
+    // }
 
-    if (mouse_move_remain_count > 0) {
-        mouse_interval_counter += mouse_interval_delta;
+    // if (mouse_move_remain_count > 0) {
+    //     mouse_interval_counter += mouse_interval_delta;
 
-        bool can_move_min = mouse_interval_counter >= 1;
+    //     bool can_move_min = mouse_interval_counter >= 1;
 
-        if (can_move_min) {
-            mouse_interval_counter -= 1;
-        }
+    //     if (can_move_min) {
+    //         mouse_interval_counter -= 1;
+    //     }
 
-        if (is_mouse_move_x_min) {
+    //     if (is_mouse_move_x_min) {
             
-            mouse_report.y = mouse_move_y_sign;
+    //         mouse_report.y = mouse_move_y_sign;
 
-            if (can_move_min) {
-                mouse_report.x = mouse_move_x_sign;
-            }
-        } else {
+    //         if (can_move_min) {
+    //             mouse_report.x = mouse_move_x_sign;
+    //         }
+    //     } else {
             
-            mouse_report.x = mouse_move_x_sign;
+    //         mouse_report.x = mouse_move_x_sign;
 
-            if (can_move_min) {
-                mouse_report.y = mouse_move_y_sign;
-            } 
-        }
+    //         if (can_move_min) {
+    //             mouse_report.y = mouse_move_y_sign;
+    //         } 
+    //     }
 
-        mouse_report.x *= 1 + mouse_move_remain_count / 10;
-        mouse_report.y *= 1 + mouse_move_remain_count / 10;
+    //     mouse_report.x *= 1 + mouse_move_remain_count / 10;
+    //     mouse_report.y *= 1 + mouse_move_remain_count / 10;
 
-        mouse_move_remain_count--;
-    } else {
-        mouse_report.x = 0;
-        mouse_report.y = 0;
-    }
+    //     mouse_move_remain_count--;
+    // } else {
+    //     mouse_report.x = 0;
+    //     mouse_report.y = 0;
+    // }
     
-    int16_t current_x = mouse_report.x;
-    int16_t current_y = mouse_report.y;
-    int16_t current_h = 0;
-    int16_t current_v = 0;
+    // int16_t current_x = mouse_report.x;
+    // int16_t current_y = mouse_report.y;
+    // int16_t current_h = 0;
+    // int16_t current_v = 0;
 
-    if (current_x != 0 || current_y != 0) {
+    // if (current_x != 0 || current_y != 0) {
         
-        switch (state) {
-            case CLICKABLE:
-                click_timer = timer_read();
-                break;
+    //     switch (state) {
+    //         case CLICKABLE:
+    //             click_timer = timer_read();
+    //             break;
 
-            case CLICKING:
-                after_click_lock_movement -= my_abs(current_x) + my_abs(current_y);
+    //         case CLICKING:
+    //             after_click_lock_movement -= my_abs(current_x) + my_abs(current_y);
 
-                if (after_click_lock_movement > 0) {
-                    current_x = 0;
-                    current_y = 0;
-                }
+    //             if (after_click_lock_movement > 0) {
+    //                 current_x = 0;
+    //                 current_y = 0;
+    //             }
 
-                break;
+    //             break;
 
-            case SCROLLING:
-            {
-                int8_t rep_v = 0;
-                int8_t rep_h = 0;
+    //         case SCROLLING:
+    //         {
+    //             int8_t rep_v = 0;
+    //             int8_t rep_h = 0;
 
-                // 垂直スクロールの方の感度を高める。 Increase sensitivity toward vertical scrolling.
-                if (my_abs(current_y) * 2 > my_abs(current_x)) {
+    //             // 垂直スクロールの方の感度を高める。 Increase sensitivity toward vertical scrolling.
+    //             if (my_abs(current_y) * 2 > my_abs(current_x)) {
 
-                    scroll_v_mouse_interval_counter += current_y;
-                    while (my_abs(scroll_v_mouse_interval_counter) > scroll_v_threshold) {
-                        if (scroll_v_mouse_interval_counter < 0) {
-                            scroll_v_mouse_interval_counter += scroll_v_threshold;
-                            rep_v += scroll_v_threshold;
-                        } else {
-                            scroll_v_mouse_interval_counter -= scroll_v_threshold;
-                            rep_v -= scroll_v_threshold;
-                        }
+    //                 scroll_v_mouse_interval_counter += current_y;
+    //                 while (my_abs(scroll_v_mouse_interval_counter) > scroll_v_threshold) {
+    //                     if (scroll_v_mouse_interval_counter < 0) {
+    //                         scroll_v_mouse_interval_counter += scroll_v_threshold;
+    //                         rep_v += scroll_v_threshold;
+    //                     } else {
+    //                         scroll_v_mouse_interval_counter -= scroll_v_threshold;
+    //                         rep_v -= scroll_v_threshold;
+    //                     }
                         
-                    }
-                } else {
+    //                 }
+    //             } else {
 
-                    scroll_h_mouse_interval_counter += current_x;
+    //                 scroll_h_mouse_interval_counter += current_x;
 
-                    while (my_abs(scroll_h_mouse_interval_counter) > scroll_h_threshold) {
-                        if (scroll_h_mouse_interval_counter < 0) {
-                            scroll_h_mouse_interval_counter += scroll_h_threshold;
-                            rep_h += scroll_h_threshold;
-                        } else {
-                            scroll_h_mouse_interval_counter -= scroll_h_threshold;
-                            rep_h -= scroll_h_threshold;
-                        }
-                    }
-                }
+    //                 while (my_abs(scroll_h_mouse_interval_counter) > scroll_h_threshold) {
+    //                     if (scroll_h_mouse_interval_counter < 0) {
+    //                         scroll_h_mouse_interval_counter += scroll_h_threshold;
+    //                         rep_h += scroll_h_threshold;
+    //                     } else {
+    //                         scroll_h_mouse_interval_counter -= scroll_h_threshold;
+    //                         rep_h -= scroll_h_threshold;
+    //                     }
+    //                 }
+    //             }
 
-                current_h = rep_h / scroll_h_threshold;
-                current_v = -rep_v / scroll_v_threshold;
-                current_x = 0;
-                current_y = 0;
-            }
-                break;
+    //             current_h = rep_h / scroll_h_threshold;
+    //             current_v = -rep_v / scroll_v_threshold;
+    //             current_x = 0;
+    //             current_y = 0;
+    //         }
+    //             break;
 
-            case WAITING:
-                if (timer_elapsed(click_timer) > to_clickable_time) {
-                    enable_click_layer();
-                }
-                break;
+    //         case WAITING:
+    //             if (timer_elapsed(click_timer) > to_clickable_time) {
+    //                 enable_click_layer();
+    //             }
+    //             break;
 
-            default:
-                click_timer = timer_read();
-                state = WAITING;
-        }
-    }
-    else
-    {
-        switch (state) {
-            case CLICKING:
-            case SCROLLING:
+    //         default:
+    //             click_timer = timer_read();
+    //             state = WAITING;
+    //     }
+    // }
+    // else
+    // {
+    //     switch (state) {
+    //         case CLICKING:
+    //         case SCROLLING:
 
-                break;
+    //             break;
 
-            case CLICKABLE:
-                if (timer_elapsed(click_timer) > to_reset_time) {
-                    disable_click_layer();
-                }
-                break;
+    //         case CLICKABLE:
+    //             if (timer_elapsed(click_timer) > to_reset_time) {
+    //                 disable_click_layer();
+    //             }
+    //             break;
 
-             case WAITING:
-                if (timer_elapsed(click_timer) > 50) {
-                    state = NONE;
-                }
-                break;
+    //          case WAITING:
+    //             if (timer_elapsed(click_timer) > 50) {
+    //                 state = NONE;
+    //             }
+    //             break;
 
-            default:
-                state = NONE;
-        }
-    }
+    //         default:
+    //             state = NONE;
+    //     }
+    // }
 
-    mouse_report.x = current_x;
-    mouse_report.y = current_y;
-    mouse_report.h = current_h;
-    mouse_report.v = current_v;
+    // mouse_report.x = current_x;
+    // mouse_report.y = current_y;
+    // mouse_report.h = current_h;
+    // mouse_report.v = current_v;
 
     return mouse_report;
 }

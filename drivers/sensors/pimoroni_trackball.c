@@ -57,6 +57,11 @@ static int16_t        v_offset    = 0;
 static uint16_t       precision   = 128;
 static uint8_t        error_count = 0;
 
+int16_t my_left = 0;
+int16_t my_right = 0;
+int16_t my_down = 0;
+int16_t my_up = 0;
+
 float trackball_get_precision(void) { return ((float)precision / 128); }
 void  trackball_set_precision(float floatprecision) { precision = (floatprecision * 128); }
 bool  trackball_is_scrolling(void) { return scrolling; }
@@ -66,14 +71,18 @@ void trackball_set_rgbw(uint8_t r, uint8_t g, uint8_t b, uint8_t w) {
     uint8_t                              data[4] = {r, g, b, w};
     __attribute__((unused)) i2c_status_t status  = i2c_writeReg(PIMORONI_TRACKBALL_ADDRESS << 1, TRACKBALL_REG_LED_RED, data, sizeof(data), TRACKBALL_TIMEOUT);
 #ifdef TRACKBALL_DEBUG
-    dprintf("Trackball RGBW i2c_status_t: %d\n", status);
+    // dprintf("Trackball RGBW i2c_status_t: %d\n", status);
 #endif
 }
 
 i2c_status_t read_pimoroni_trackball(pimoroni_data* data) {
     i2c_status_t status = i2c_readReg(PIMORONI_TRACKBALL_ADDRESS << 1, TRACKBALL_REG_LEFT, (uint8_t*)data, sizeof(*data), TRACKBALL_TIMEOUT);
+    my_left = data->left;
+    my_right = data->right;
+    my_down = data->down;
+    my_up = data->up;
 #ifdef TRACKBALL_DEBUG
-    dprintf("Trackball READ i2c_status_t: %d\nLeft: %d\nRight: %d\nUp: %d\nDown: %d\nSwtich: %d\n", status, data->left, data->right, data->up, data->down, data->click);
+   // dprintf("Trackball READ i2c_status_t: %d\nLeft: %d\nRight: %d\nUp: %d\nDown: %d\nSwtich: %d\n", status, data->left, data->right, data->up, data->down, data->click);
 #endif
     return status;
 }
@@ -160,27 +169,29 @@ __attribute__((weak)) void pointing_device_task() {
                             y_offset += trackball_get_offsets(current_pimoroni_data.down, current_pimoroni_data.up, PIMORONI_TRACKBALL_MOUSE_SCALE);
 #endif
                         }
-                        if (scrolling) {
-#ifndef PIMORONI_TRACKBALL_ROTATE
-                            trackball_adapt_values(&mouse_report.h, &h_offset);
-                            trackball_adapt_values(&mouse_report.v, &v_offset);
-#else
-                            trackball_adapt_values(&mouse_report.h, &v_offset);
-                            trackball_adapt_values(&mouse_report.v, &h_offset);
-#endif
-                            mouse_report.x = 0;
-                            mouse_report.y = 0;
-                        } else {
-#ifndef PIMORONI_TRACKBALL_ROTATE
-                            trackball_adapt_values(&mouse_report.x, &x_offset);
-                            trackball_adapt_values(&mouse_report.y, &y_offset);
-#else
-                            trackball_adapt_values(&mouse_report.x, &y_offset);
-                            trackball_adapt_values(&mouse_report.y, &x_offset);
-#endif
-                            mouse_report.h = 0;
-                            mouse_report.v = 0;
-                        }
+//                         if (scrolling) {
+// #ifndef PIMORONI_TRACKBALL_ROTATE
+//                             trackball_adapt_values(&mouse_report.h, &h_offset);
+//                             trackball_adapt_values(&mouse_report.v, &v_offset);
+// #else
+//                             trackball_adapt_values(&mouse_report.h, &v_offset);
+//                             trackball_adapt_values(&mouse_report.v, &h_offset);
+// #endif
+//                             mouse_report.x = 0;
+//                             mouse_report.y = 0;
+//                         } else {
+// #ifndef PIMORONI_TRACKBALL_ROTATE
+//                             trackball_adapt_values(&mouse_report.x, &x_offset);
+//                             trackball_adapt_values(&mouse_report.y, &y_offset);
+// #else
+//                             trackball_adapt_values(&mouse_report.x, &y_offset);
+//                             trackball_adapt_values(&mouse_report.y, &x_offset);
+// #endif
+//                             mouse_report.h = 0;
+//                             mouse_report.v = 0;
+//                         }
+
+                            
                     } else {
                         debounce--;
                     }
@@ -193,6 +204,9 @@ __attribute__((weak)) void pointing_device_task() {
             error_count++;
         }
 
+        mouse_report.x = trackball_get_offsets(my_right, my_left, PIMORONI_TRACKBALL_SCROLL_SCALE);
+        mouse_report.y = trackball_get_offsets(my_up, my_down, PIMORONI_TRACKBALL_SCROLL_SCALE);
+        //dprintf("pim x: %u  y: %u mouse_report x: %d y: %d",my_left, my_down, mouse_report.x, mouse_report.y);
         pointing_device_set_report(mouse_report);
         pointing_device_send();
 
