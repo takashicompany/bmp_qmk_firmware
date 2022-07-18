@@ -37,8 +37,17 @@ extern bool    ch559_update_mode;
 extern uint8_t device_cnt;
 extern uint8_t hid_info_cnt;
 
+keyboard_config_t keyboard_config;
 uint8_t qt_cmd_buf[3];
 bool    qt_cmd_new;
+
+uint8_t  encoder_modifier                = 0;
+uint16_t encoder_modifier_pressed_ms     = 0;
+bool     is_encoder_action               = false;
+
+#ifndef ENCODER_MODIFIER_TIMEOUT_MS
+#    define ENCODER_MODIFIER_TIMEOUT_MS 500
+#endif
 
 bool bmp_config_overwrite(bmp_api_config_t const *const config_on_storage,
                           bmp_api_config_t *const       keyboard_config) {
@@ -143,6 +152,16 @@ int send_led_cmd(uint8_t led) {
     }
 }
 
+void eeconfig_init_kb(void) {
+    keyboard_config.raw = 0;
+    eeconfig_update_kb(keyboard_config.raw);
+}
+
+void matrix_init_kb(void) {
+    keyboard_config.raw = eeconfig_read_kb();
+    set_key_override(keyboard_config.override_mode);
+}
+
 void matrix_scan_kb(void) {
     bmp_api_config_t const * config = BMPAPI->app.get_config();
     static uint32_t timer = UINT32_MAX >> 1; // To run at first loop
@@ -175,6 +194,12 @@ void matrix_scan_kb(void) {
             ble_led_indicator_recv = current;
             send_led_cmd(current);
         }
+    }
+
+    if (encoder_modifier != 0 && timer_elapsed(encoder_modifier_pressed_ms) >
+                                     ENCODER_MODIFIER_TIMEOUT_MS) {
+        unregister_mods(encoder_modifier);
+        encoder_modifier = 0;
     }
 
     matrix_scan_user();
@@ -396,4 +421,62 @@ MSCMD_USER_RESULT usrcmd_chparser(MSOPT *msopt, MSCMD_USER_OBJECT usrobj) {
     BMPAPI->app.set_config(&config);
 
     return 0;
+}
+
+bool process_record_kb_bmp(uint16_t keycode, keyrecord_t *record) {
+    if (encoder_modifier != 0 && !is_encoder_action) {
+        unregister_mods(encoder_modifier);
+        encoder_modifier = 0;
+    }
+    switch (keycode) {
+        case QK_MODS ... QK_MODS_MAX:
+            if (is_encoder_action) {
+                if (record->event.pressed) {
+                    uint8_t current_mods        = keycode >> 8;
+                    encoder_modifier_pressed_ms = timer_read();
+                    if (current_mods != encoder_modifier) {
+                        del_mods(encoder_modifier);
+                        encoder_modifier = current_mods;
+                        add_mods(encoder_modifier);
+                    }
+                    register_code(keycode & 0xff);
+                } else {
+                    unregister_code(keycode & 0xff);
+                }
+                return false;
+            } else {
+                return true;
+            }
+            break;
+    }
+
+    if (record->event.pressed) {
+        switch (keycode) {
+            case DISABLE_KEY_OVERRIDES:
+            case KEY_OVERRIDE_OFF: {
+                println("Disable key overrides");
+                keyboard_config.override_mode = DISABLE_OVERRIDE;
+                set_key_override(DISABLE_OVERRIDE);
+                eeconfig_update_kb(keyboard_config.raw);
+                return true;
+            }
+            case ENABLE_US_KEY_ON_JP_OS_OVERRIDE: {
+                println(
+                    "Perform as an US keyboard on the OS configured for JP");
+                keyboard_config.override_mode = US_KEY_ON_JP_OS_OVERRIDE;
+                set_key_override(US_KEY_ON_JP_OS_OVERRIDE);
+                eeconfig_update_kb(keyboard_config.raw);
+                return false;
+            } break;
+            case ENABLE_JP_KEY_ON_US_OS_OVERRIDE: {
+                println("Perform as a JP keyboard on the OS configured for US");
+                keyboard_config.override_mode = JP_KEY_ON_US_OS_OVERRIDE;
+                set_key_override(JP_KEY_ON_US_OS_OVERRIDE);
+                eeconfig_update_kb(keyboard_config.raw);
+                return false;
+            } break;
+        }
+    }
+
+    return process_record_user(keycode, record);
 }

@@ -18,15 +18,25 @@ bmp_error_t webnus_write_callback(const uint8_t* dat, uint32_t len);
 
 void update_config_files();
 
+int save_config();
+
 int load_eeprom_emulation_file();
 int save_eeprom_emulation_file();
 
-int load_tapping_term_file();
-int save_tapping_term_file();
+int                     load_tapping_term_file();
+int                     save_tapping_term_file();
+void                    set_tapping_term_config(bmp_qmk_config_t* qmk_config);
+const bmp_qmk_config_t* get_tapping_term_config(void);
+
+const bmp_encoder_config_t* get_bmp_encoder_config();
+void set_encoder_config(bmp_encoder_config_t const* encoder_config);
+int  save_encoder_config(void);
 
 int save_keymap();
 int load_ex_keycode_file();
 int save_ex_keycode_file();
+
+void convert_exkc_combo();
 
 int load_encoder_config_file();
 
