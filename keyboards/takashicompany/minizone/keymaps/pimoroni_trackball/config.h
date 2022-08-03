@@ -15,3 +15,5 @@
  */
 
 #pragma once
+
+#define PIMORONI_TRACKBALL_CLICK
